@@ -54,6 +54,7 @@ export default function Index() {
     } catch (e) {
       alert(`Error! can't reach server. see console`)
       console.error(e)
+      setLoading(false)
     }
     
     
