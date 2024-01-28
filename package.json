@@ -19,6 +19,8 @@
     "isbot": "^4.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "satori": "^0.10.11",
+    "svg2img": "^1.0.0-beta.2",
     "usehooks-ts": "^2.10.0"
   },
   "devDependencies": {

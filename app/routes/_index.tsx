@@ -1,18 +1,45 @@
-import type { MetaFunction } from "@remix-run/node";
+import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { json, useSearchParams } from "@remix-run/react";
+import { RankResponse, rankApi } from "~/api";
 
-const API_URL = "https://ranker.yehoyada.com";
-export const meta: MetaFunction = () => {
+
+
+export async function loader({request}: LoaderFunctionArgs) {
+  const params = new URL(request.url).searchParams
+  const username = params.get('username')
+  return json({username, requestURL: request.url})
+}
+
+
+
+export const meta: MetaFunction<typeof loader> = ({data}) => {
+  const imageUrl = new URL(`/og/${data?.username ?? ''}`, data.requestURL).toString()
   return [
     { title: "Ranker Web" },
     { name: "description", content: "Rank Github Profile" },
+    {
+      property: "og:type",
+      content: "website",
+    },
+    {
+      property: "og:site_name",
+      content: "WriteHub",
+    },
+    {
+      property: "og:image",
+      content: imageUrl,
+    },
+    {
+      property: "twitter:card",
+      content: "summary_large_image",
+    },
   ];
 };
 
-interface RankResponse {
-  score: number;
-}
+
+
 
 
 function extractGitHubUsername(input: string): string | null {
@@ -36,27 +63,46 @@ export default function Index() {
   const [scoreResponse, setScoreResponse] = useState<RankResponse>();
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams()
 
 
-  async function rank() {
-    if (!inputValue) {
+  useEffect(() => {
+    const paramUsername = searchParams.get('username')
+    console.log(paramUsername)
+    if (paramUsername) {
+      setInputValue(paramUsername)
+      rank(paramUsername)
+    }
+  }, [])
+
+  async function rank(value: string) {
+    if (!value) {
+      console.log('empty usernmae')
       return;
     }
     setScoreResponse(undefined)
     setLoading(true)
     
-    const username = extractGitHubUsername(inputValue)
-    try {
-      const res = await axios.get(`${API_URL}/score?username=${username}`)
-      const data = res.data as RankResponse
-      setScoreResponse(data);
-      setLoading(false);
-    } catch (e) {
-      alert(`Error! can't reach server. see console`)
-      console.error(e)
-      setLoading(false)
+    const username = extractGitHubUsername(value)
+    if (username) {
+      const newParams = new URLSearchParams()
+      newParams.set('username', username)
+      setSearchParams(newParams, {preventScrollReset: true})
+      try {
+        const res = await rankApi(username)
+        const data = res.data as RankResponse
+        setScoreResponse(data);
+        setLoading(false);
+      } catch (e) {
+        alert(`Error! can't reach server. see console`)
+        console.error(e)
+        setLoading(false)
+      }
+      
+    } else {
+      alert('Invalid username cant parse')
     }
-    
+
     
   }
 
@@ -78,7 +124,7 @@ export default function Index() {
           onChange={e => setInputValue(e.target.value)}
           value={inputValue}
         />
-        <button onClick={rank} className="btn btn-primary join-item">
+        <button onClick={() => rank(inputValue)} className="btn btn-primary join-item">
           RANK IT!
         </button>
       </div>
