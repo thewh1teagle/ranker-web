@@ -90,8 +90,8 @@ export default function Index() {
       setSearchParams(newParams, {preventScrollReset: true})
       try {
         const res = await rankApi(username)
-        const data = res.data as RankResponse
-        setScoreResponse(data);
+        console.log('res => ', res)
+        setScoreResponse(res);
         setLoading(false);
       } catch (e) {
         alert(`Error! can't reach server. see console`)
