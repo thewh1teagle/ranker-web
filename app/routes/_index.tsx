@@ -46,10 +46,17 @@ export default function Index() {
     setLoading(true)
     
     const username = extractGitHubUsername(inputValue)
-    const res = await axios.get(`${API_URL}/score?username=${username}`)
-    const data = res.data as RankResponse
-    setScoreResponse(data);
-    setLoading(false);
+    try {
+      const res = await axios.get(`${API_URL}/score?username=${username}`)
+      const data = res.data as RankResponse
+      setScoreResponse(data);
+      setLoading(false);
+    } catch (e) {
+      alert(`Error! can't reach server. see console`)
+      console.error(e)
+    }
+    
+    
   }
 
   function rankMock() {
