@@ -2,7 +2,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-const API_URL = "http://localhost:8080";
+const API_URL = "https://ranker.yehoyada.com";
 export const meta: MetaFunction = () => {
   return [
     { title: "Ranker Web" },
@@ -14,23 +14,45 @@ interface RankResponse {
   score: number;
 }
 
+
+function extractGitHubUsername(input: string): string | null {
+  // Regular expression to match GitHub repository URLs
+  const githubUrlRegex = /^(?:https?:\/\/)?(?:www\.)?github\.com\/([^\/]+)(?:\/|$)/i;
+
+  // Match the input against the regex
+  const urlMatch = input.match(githubUrlRegex);
+
+  // If there is a match in the URL format, extract the username
+  if (urlMatch) {
+    return urlMatch[1];
+  }
+
+  // If no URL match, assume the input is the username itself
+  return input.trim() || null;
+}
+
+
 export default function Index() {
   const [scoreResponse, setScoreResponse] = useState<RankResponse>();
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
+
   async function rank() {
-    setScoreResponse(undefined)
     if (!inputValue) {
       return;
     }
+    setScoreResponse(undefined)
     setLoading(true)
-    const username = inputValue.includes("http")
-      ? inputValue.replace("https", "http").replace("https://github.com/", "")
-      : inputValue;
+    
+    const username = extractGitHubUsername(inputValue)
+    const res = await axios.get(`${API_URL}/score?username=${username}`)
+    const data = res.data as RankResponse
+    setScoreResponse(data);
+    setLoading(false);
+  }
 
-    // const res = await axios.get(`${API_URL}/score?username=hvuhsg`)
-    // const data = res.data as RankResponse
+  function rankMock() {
     setTimeout(() => {
       setScoreResponse({ score: 100 });
       setLoading(false);
